@@ -1,36 +1,35 @@
 language: cpp
 sudo: required
+os:
+  - linux
+  - osx
 dist: trusty
+addons:
+  apt:
+    packages: # Update dependencies on linux if in travis apt whitelist
+      - libboost-test-dev
+      - libboost-system-dev
+      - libboost-thread-dev
+      - libboost-filesystem-dev
+      - libboost-program-options-dev
+      - libtinyxml-dev
 branches:
   only:
   - master
   - devel
 compiler:
-- gcc
-addons:
-  apt:
-    packages:
-      - g++
-      - cmake
-      - libboost-dev
-      - libboost-filesystem-dev
-      - libboost-system-dev
-      - git
-      - flex
-      - bison
-      - asciidoc
-      - source-highlight
-      - doxygen
-      - libtinyxml-dev
-      - libltdl-dev
-      - liblog4cxx10-dev
-
+  - gcc
 before_install:
-  - git submodule update --init --recursive
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-  - sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net --recv-key 0xB01FA116
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq liburdfdom-dev libassimp-dev ros-indigo-xacro ros-indigo-kdl-parser ros-indigo-common-msgs ros-indigo-tf ros-indigo-tf-conversions
-  - sudo apt-get install -qq ros-indigo-libccd ros-indigo-octomap
+  - git submodule --quiet update --init
+  - export ROOT_DIR=`pwd`
+  - export DEVEL_DIR="$ROOT_DIR/_travis"
+  - export TRAVIS_SUBMODULE="$ROOT_DIR/.travis-submodule"
 
-script: ./.travis/build
+  - export APT_PACKAGES=""
+  - export BREW_PACKAGES=""
+
+  - export EXTERNAL_DEPENDENCIES="doxygen libccd eigen3 octomap"
+  - export HPP_DEPENDENCIES="hpp-util hpp-fcl hpp-model qpOASES"
+install: ${TRAVIS_SUBMODULE}/install
+script: ${TRAVIS_SUBMODULE}/script
+after_failure: ${TRAVIS_SUBMODULE}/after_failure

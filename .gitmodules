@@ -1,3 +1,6 @@
 [submodule "cmake"]
 	path = cmake
 	url = git://github.com/jrl-umi3218/jrl-cmakemodules.git
+[submodule ".travis-submodule"]
+	path = .travis-submodule
+	url = git://github.com/jmirabel/travis-submodule.git

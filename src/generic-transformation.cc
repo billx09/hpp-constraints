@@ -16,6 +16,7 @@
 
 #include <hpp/constraints/generic-transformation.hh>
 
+#include <Eigen/Geometry>
 #include <boost/math/constants/constants.hpp>
 
 #include <hpp/model/device.hh>
@@ -49,7 +50,7 @@ namespace hpp {
             const GenericTransformationData<rel, pos, true>& d)
           {
             const matrix3_t& Rerror (d.M.getRotation ());
-            value_type tr = Rerror.trace();
+            value_type tr = Rerror(0,0) + Rerror(1,1) + Rerror(2,2);
             if (tr > 3)       d.theta = 0; // acos((3-1)/2)
             else if (tr < -1) d.theta = ::boost::math::constants::pi<value_type>(); // acos((-1-1)/2)
             else              d.theta = acos ((tr - 1)/2);
@@ -88,7 +89,8 @@ namespace hpp {
               const value_type st_1mct = st/(1-ct);
 
               d.JlogXTR1inJ1.setZero ();
-              d.JlogXTR1inJ1.diagonal().setConstant (d.theta*st_1mct);
+              d.JlogXTR1inJ1(0,0) = d.JlogXTR1inJ1(1,1) = d.JlogXTR1inJ1(2,2) = d.theta*st_1mct;
+              // d.JlogXTR1inJ1.diagonal().setConstant (d.theta*st_1mct);
 
               // Jlog += -r_{\times}/2
               d.JlogXTR1inJ1(0,1) =  d.value((pos?3:0)+2); d.JlogXTR1inJ1(1,0) = -d.value((pos?3:0)+2);
@@ -145,13 +147,13 @@ namespace hpp {
               assign_if (!d.fullPos, d, J, d.tmpJac + d.joint2->jacobian().template topRows<3>(), 0, leftCols);
             } else { // Generic case
               d.tmpJac.noalias() += d.joint2->jacobian().template topRows<3>();
-              assign_if (!d.fullPos, d, J, transpose(R1inJ1) * d.tmpJac, 0, leftCols);
+              assign_if (!d.fullPos, d, J, R1inJ1.derived().transpose() * d.tmpJac, 0, leftCols);
             }
           } else {
             if (d.R1isID)
               assign_if (!d.fullPos, d, J,                     d.joint2->jacobian().template topRows<3>(), 0, leftCols);
             else
-              assign_if (!d.fullPos, d, J, transpose(R1inJ1) * d.joint2->jacobian().template topRows<3>(), 0, leftCols);
+              assign_if (!d.fullPos, d, J, R1inJ1.derived().transpose() * d.joint2->jacobian().template topRows<3>(), 0, leftCols);
           }
         }
       };
@@ -168,7 +170,7 @@ namespace hpp {
                   d.joint2->jacobian().template bottomRows<3>()
                 - d.joint1->jacobian().template bottomRows<3>();
           assign_if(!d.fullOri, d, J,
-              d.JlogXTR1inJ1 * transpose (R1) * d.tmpJac,
+              d.JlogXTR1inJ1 * R1.derived().transpose () * d.tmpJac,
               (pos?3:0), leftCols);
         }
         template <bool ori> static inline void Jtranslation (
@@ -186,8 +188,8 @@ namespace hpp {
             - d.joint1->jacobian().template topRows<3>();
           if (!d.t2isZero)
             d.tmpJac.noalias() += d.joint2->jacobian().template bottomRows<3>().colwise().cross(d.cross2);
-          if (d.R1isID) assign_if(!d.fullPos, d, J,                     transpose(R1) * d.tmpJac, 0, leftCols);
-          else          assign_if(!d.fullPos, d, J, transpose(R1inJ1) * transpose(R1) * d.tmpJac, 0, leftCols);
+          if (d.R1isID) assign_if(!d.fullPos, d, J,                                R1.derived().transpose() * d.tmpJac, 0, leftCols);
+          else          assign_if(!d.fullPos, d, J, R1inJ1.derived().transpose() * R1.derived().transpose() * d.tmpJac, 0, leftCols);
         }
       };
 
@@ -197,8 +199,8 @@ namespace hpp {
         {
           // There is no joint1
           const Transform3f& J2 = d.joint2->currentTransformation ();
-          d.value.noalias() = J2.transform (d.F2inJ2.getTranslation());
-          if (!d.t1isZero) d.value.noalias() -= d.F1inJ1.getTranslation();
+          d.value.noalias() = J2.transform (d.F2inJ2.getTranslation()).derived();
+          if (!d.t1isZero) d.value.noalias() -= d.F1inJ1.getTranslation().derived();
           if (!d.R1isID)
             d.value.applyOnTheLeft(d.F1inJ1.getRotation().derived().transpose());
         }
@@ -209,7 +211,7 @@ namespace hpp {
         {
           const Transform3f& J2 = d.joint2->currentTransformation ();
           d.M = d.F1inJ1.inverseTimes(J2 * d.F2inJ2);
-          if (pos) d.value.template head<3>().noalias() = d.M.getTranslation();
+          if (pos) d.value.template head<3>().noalias() = d.M.getTranslation().derived();
         }
       };
       template <> struct relativeTransform<true, true> {
@@ -224,7 +226,7 @@ namespace hpp {
           const Transform3f& J1 = d.joint1->currentTransformation ();
           const Transform3f& J2 = d.joint2->currentTransformation ();
           d.M = d.F1inJ1.inverseTimes(J1.inverseTimes(J2 * d.F2inJ2));
-          if (pos) d.value.template head<3>().noalias() = d.M.getTranslation();
+          if (pos) d.value.template head<3>().noalias() = d.M.getTranslation().derived();
         }
       };
       template <> struct relativeTransform<true, false> {
@@ -237,11 +239,11 @@ namespace hpp {
           }
           const Transform3f& J2 = d.joint2->currentTransformation ();
           const Transform3f& J1 = d.joint1->currentTransformation ();
-          d.value.noalias() = J2.transform (d.F2inJ2.getTranslation())
-                              - J1.getTranslation();
+          d.value.noalias() = (J2.transform (d.F2inJ2.getTranslation())
+                              - J1.getTranslation()).derived();
           d.value.applyOnTheLeft(J1.getRotation().derived().transpose());
 
-          if (!d.t1isZero) d.value.noalias() -= d.F1inJ1.getTranslation();
+          if (!d.t1isZero) d.value.noalias() -= d.F1inJ1.getTranslation().derived();
           if (!d.R1isID)
             d.value.applyOnTheLeft(d.F1inJ1.getRotation().derived().transpose());
         }
@@ -264,7 +266,7 @@ namespace hpp {
           const matrix3_t& R2 (J2.getRotation ());
 
           if (!d.t2isZero)
-            d.cross2.noalias() = R2*t2inJ2;
+            d.cross2.noalias() = (R2*t2inJ2).derived();
 
           unary<ori>::Jlog (d);
           hppDnum (info, "Jlog_: " << d.JlogXTR1inJ1);
@@ -274,11 +276,11 @@ namespace hpp {
           if (rel && d.getJoint1()) {
             const Transform3f& J1 = d.getJoint1()->currentTransformation ();
             const vector3_t& t1 (J1.getTranslation ());
-            d.cross1.noalias() = d.cross2 + t2 - t1;
+            d.cross1.noalias() = d.cross2 + (t2 - t1).derived();
             binary<rel, pos>::Jtranslation (d, jacobian);
             binary<rel, ori>::Jorientation (d, jacobian);
           } else {
-            d.cross1.noalias() = d.cross2 + t2;
+            d.cross1.noalias() = d.cross2 + t2.derived();
             binary<false, pos>::Jtranslation (d, jacobian);
             binary<false, ori>::Jorientation (d, jacobian);
           }

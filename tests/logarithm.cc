@@ -35,9 +35,9 @@
 
 using namespace hpp::constraints;
 
-matrix3_t exponential (const vector3_t& aa)
+eigen::matrix3_t exponential (const eigen::vector3_t& aa)
 {
-  matrix3_t R, xCross;
+  eigen::matrix3_t R, xCross;
   xCross.setZero();
   xCross(1, 0) = + aa(2); xCross(0, 1) = - aa(2);
   xCross(2, 0) = - aa(1); xCross(0, 2) = + aa(1);
@@ -54,17 +54,21 @@ matrix3_t exponential (const vector3_t& aa)
   return R;
 }
 
-vector3_t log (const matrix3_t R)
+eigen::vector3_t log (const eigen::matrix3_t R)
 {
   GenericTransformationData<false, false, true> data(0);
-  data.M = R;
+  matrix3_t M;
+  for(int i = 0; i < 3; ++i)
+    for(int j = 0; j < 3; ++j)
+      M(i,j) = R(i,j);
+  data.M = M;
   unary<true>::log(data);
   return data.value;
 }
 
-bool check (const vector3_t& aa, const value_type eps = -1)
+bool check (const eigen::vector3_t& aa, const value_type eps = -1)
 {
-  vector3_t res = log (exponential(aa));
+  eigen::vector3_t res = log (exponential(aa));
   bool ret;
   if (eps < 0) ret = aa.isApprox(res);
   else         ret = aa.isApprox(res, eps);
@@ -86,29 +90,29 @@ BOOST_AUTO_TEST_CASE (logarithm) {
   const value_type dlUB = 1e-2;
   const value_type eps = sqrt(Eigen::NumTraits<value_type>::epsilon());
 
-  BOOST_CHECK(check (vector3_t (0,0,0)));
-  BOOST_CHECK(check (vector3_t (1,0,0)));
-  BOOST_CHECK(check (vector3_t (0,1,0)));
-  BOOST_CHECK(check (vector3_t (0,0,1)));
-  BOOST_CHECK(check (vector3_t (1,1,0)));
-  BOOST_CHECK(check (vector3_t (0,1,1)));
-  BOOST_CHECK(check (vector3_t (1,0,1)));
-  BOOST_CHECK(check (vector3_t (1,1,1)));
+  BOOST_CHECK(check (eigen::vector3_t (0,0,0)));
+  BOOST_CHECK(check (eigen::vector3_t (1,0,0)));
+  BOOST_CHECK(check (eigen::vector3_t (0,1,0)));
+  BOOST_CHECK(check (eigen::vector3_t (0,0,1)));
+  BOOST_CHECK(check (eigen::vector3_t (1,1,0)));
+  BOOST_CHECK(check (eigen::vector3_t (0,1,1)));
+  BOOST_CHECK(check (eigen::vector3_t (1,0,1)));
+  BOOST_CHECK(check (eigen::vector3_t (1,1,1)));
 
-  BOOST_CHECK(check (M_PI * vector3_t (1,0,0)));
-  BOOST_CHECK(check (M_PI * vector3_t (0,1,0)));
-  BOOST_CHECK(check (M_PI * vector3_t (0,0,1)));
-  BOOST_CHECK(check (M_PI / sqrt(2) * vector3_t (1,1,0)));
-  BOOST_CHECK(check (M_PI / sqrt(2) * vector3_t (0,1,1)));
-  BOOST_CHECK(check (M_PI / sqrt(2) * vector3_t (1,0,1)));
+  BOOST_CHECK(check (M_PI * eigen::vector3_t (1,0,0)));
+  BOOST_CHECK(check (M_PI * eigen::vector3_t (0,1,0)));
+  BOOST_CHECK(check (M_PI * eigen::vector3_t (0,0,1)));
+  BOOST_CHECK(check (M_PI / sqrt(2) * eigen::vector3_t (1,1,0)));
+  BOOST_CHECK(check (M_PI / sqrt(2) * eigen::vector3_t (0,1,1)));
+  BOOST_CHECK(check (M_PI / sqrt(2) * eigen::vector3_t (1,0,1)));
 
-  BOOST_CHECK(check (M_PI / sqrt(3) * vector3_t (1,-1,1), eps));
-  BOOST_CHECK(check (M_PI / sqrt(3) * vector3_t (1, 1,1), eps));
+  BOOST_CHECK(check (M_PI / sqrt(3) * eigen::vector3_t (1,-1,1), eps));
+  BOOST_CHECK(check (M_PI / sqrt(3) * eigen::vector3_t (1, 1,1), eps));
 
-  BOOST_CHECK(check (1e-7 * vector3_t (1,1,1)));
-  BOOST_CHECK(check ((M_PI - 0.1 * dlUB) / sqrt(3) * vector3_t (1,-1,1), eps));
-  BOOST_CHECK(check ((M_PI - 0.1 * dlUB) / sqrt(3) * vector3_t (1, 1,1), eps));
+  BOOST_CHECK(check (1e-7 * eigen::vector3_t (1,1,1)));
+  BOOST_CHECK(check ((M_PI - 0.1 * dlUB) / sqrt(3) * eigen::vector3_t (1,-1,1), eps));
+  BOOST_CHECK(check ((M_PI - 0.1 * dlUB) / sqrt(3) * eigen::vector3_t (1, 1,1), eps));
 
-  BOOST_CHECK(check ((M_PI - 1.001 * dlUB) / sqrt(3) * vector3_t (1, 1,1), eps));
-  BOOST_CHECK(check ((M_PI - 0.999 * dlUB) / sqrt(3) * vector3_t (1, 1,1)));
+  BOOST_CHECK(check ((M_PI - 1.001 * dlUB) / sqrt(3) * eigen::vector3_t (1, 1,1), eps));
+  BOOST_CHECK(check ((M_PI - 0.999 * dlUB) / sqrt(3) * eigen::vector3_t (1, 1,1)));
 }

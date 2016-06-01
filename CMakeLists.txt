@@ -31,6 +31,7 @@ SET(${PROJECT_NAME}_HEADERS
   include/hpp/constraints/differentiable-function-stack.hh
   include/hpp/constraints/distance-between-bodies.hh
   include/hpp/constraints/fwd.hh
+  include/hpp/constraints/intervals.hh
   include/hpp/constraints/svd.hh
   include/hpp/constraints/tools.hh
   include/hpp/constraints/macros.hh

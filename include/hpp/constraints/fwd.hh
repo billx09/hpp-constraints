@@ -32,6 +32,7 @@ namespace hpp {
       typedef Eigen::Matrix <double, 3, 1> vector3_t;
     } // namespace eigen
     typedef Eigen::Matrix <double, 5, 1> vector5_t;
+    typedef model::size_type size_type;
 
     HPP_PREDEF_CLASS (DistanceBetweenBodies);
     HPP_PREDEF_CLASS (DistanceBetweenPointsInBodies);

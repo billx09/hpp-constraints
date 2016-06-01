@@ -559,7 +559,16 @@ BOOST_AUTO_TEST_CASE (jacobian) {
   stack->add (RelativeOrientation::create (
         "RelativeOrientation", device, ee1, ee2, identity (),
         list_of(false)(true)(true).convert_to_container<BoolVector_t>()));
-  functions.push_back (DFptr (stack->name (), stack));
+  // Cannot be tested with intervals as we later iterate on the robot DOFs
+  // DifferentiableFunctionStackPtr_t stack2 =
+    // DifferentiableFunctionStack::create("Stack with intervals");
+  // stack2->add (Position::create ("Position", device, ee1, vector3_t (0,0,0),
+        // vector3_t (0,0,0)));
+  // stack2->add (RelativeOrientation::create (
+        // "RelativeOrientation", device, ee1, ee2, identity (),
+        // list_of(false)(true)(true).convert_to_container<BoolVector_t>()));
+  // stack2->add (SizeInterval_t(0,4));
+  // functions.push_back (DFptr (stack2->name (), stack2));
 
   ConfigurationPtr_t q1;
   vector_t value1, value2, dvalue, error;
@@ -571,7 +580,7 @@ BOOST_AUTO_TEST_CASE (jacobian) {
     value1 = vector_t (f.outputSize ());
     value2 = vector_t (f.outputSize ());
     errorNorm.setZero ();
-    jacobian = matrix_t (f.outputSize (), device->numberDof ());
+    jacobian = matrix_t (f.outputDerivativeSize (), f.inputDerivativeSize ());
     for (size_t i = 0; i < NUMBER_JACOBIAN_CALCULUS; i++) {
       q1 = cs.shoot ();
       f (value1, *q1);

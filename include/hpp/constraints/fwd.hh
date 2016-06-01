@@ -26,6 +26,7 @@
 namespace hpp {
   namespace constraints {
     HPP_PREDEF_CLASS (DifferentiableFunction);
+    HPP_PREDEF_CLASS (DifferentiableFunctionStack);
     namespace eigen {
       typedef Eigen::Matrix <double, 3, 3> matrix3_t;
       typedef Eigen::Matrix <double, 3, 1> vector3_t;
@@ -53,6 +54,8 @@ namespace hpp {
     typedef model::CenterOfMassComputationPtr_t CenterOfMassComputationPtr_t;
     typedef boost::shared_ptr <DifferentiableFunction>
     DifferentiableFunctionPtr_t;
+    typedef boost::shared_ptr <DifferentiableFunctionStack>
+    DifferentiableFunctionStackPtr_t;
     typedef model::size_type size_type;
     typedef model::value_type value_type;
     typedef model::JointPtr_t JointPtr_t;

@@ -24,6 +24,7 @@
 #include "hpp/constraints/convex-shape-contact.hh"
 #include "hpp/constraints/static-stability.hh"
 #include "hpp/constraints/configuration-constraint.hh"
+#include "hpp/constraints/differentiable-function-stack.hh"
 #include "hpp/constraints/tools.hh"
 
 // The following 6 includes are deprecated and will be removed
@@ -549,6 +550,16 @@ BOOST_AUTO_TEST_CASE (jacobian) {
         "ConvexShapeContact convex",
         createConvexShapeContact_convex (device, ee1)
       ));
+
+  // DifferentiableFunctionStack
+  DifferentiableFunctionStackPtr_t stack =
+    DifferentiableFunctionStack::create("Stack");
+  stack->add (Position::create ("Position", device, ee1, vector3_t (0,0,0),
+        vector3_t (0,0,0)));
+  stack->add (RelativeOrientation::create (
+        "RelativeOrientation", device, ee1, ee2, identity (),
+        list_of(false)(true)(true).convert_to_container<BoolVector_t>()));
+  functions.push_back (DFptr (stack->name (), stack));
 
   ConfigurationPtr_t q1;
   vector_t value1, value2, dvalue, error;

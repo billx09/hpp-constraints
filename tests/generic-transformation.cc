@@ -445,7 +445,8 @@ BOOST_AUTO_TEST_CASE (consistency) {
       RelativeTransformation::create             ("RelativeTransformationFromGeneric", device, ee1, ee2, tf1, tf2));
   check_consistent (device,
         deprecated::Position::create ("Position"           , device, ee2, tf1.getTranslation(), vector3_t (0,0,0), tf1.getRotation()),
-        Position::create             ("PositionFromGeneric", device, ee2, tf1.getTranslation(), fcl::Transform3f(transpose(tf1.getRotation()), vector3_t(0,0,0))),
+        Position::create             ("PositionFromGeneric", device, ee2, tf1.getTranslation(),
+          fcl::Transform3f((const fcl::Matrix3f&)tf1.getRotation().transpose().eval().derived(), vector3_t(0,0,0))),
         -1);
   check_consistent (device,
         deprecated::RelativeOrientation::create ("RelativeOrientation"           , device, ee1, ee2, tf1.getRotation()),

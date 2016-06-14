@@ -184,7 +184,7 @@ namespace hpp {
           if (yproj.isZero ()) M_ = MinJoint_;
           else {
             M_ = fcl::Transform3f (
-                fcl::Matrix3f (N_, yloc, N_.cross (yloc)).transpose (),
+                (fcl::Matrix3f () << N_, yloc, N_.cross (yloc)).finished(),
                 C_);
           }
         }
@@ -293,7 +293,7 @@ namespace hpp {
           }
 
           MinJoint_ = fcl::Transform3f (
-              fcl::Matrix3f (N_, Ns_[0], Us_[0]).transpose (),
+              (fcl::Matrix3f() << N_, Ns_[0], Us_[0]).finished(),
               C_);
 
           if (joint_ == NULL) recompute (Transform3f ());

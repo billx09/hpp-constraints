@@ -205,35 +205,28 @@ namespace hpp {
       jacobian_.rightCols (jacobian_.cols() - leftCols).setZero();
       if (joint1_) {
         jacobian_.topRows <3> ().leftCols (leftCols) =
-#ifdef FCL_HAVE_EIGEN
-          transpose (R1inJ1) * transpose (R1)
-#else
           // This is a bug in Eigen that is fixed in a future version.
           // See https://bitbucket.org/eigen/eigen/commits/de7b8c9b1e86/
-          transpose (R1*R1inJ1)
-#endif
-          *(cross1_*joint1_->jacobian ().bottomRows <3> ()-
+          // (R1*R1inJ1).tranpose()
+          R1inJ1.transpose() * R1.transpose() *
+          (cross1_*joint1_->jacobian ().bottomRows <3> ()-
 				 cross2_*joint2_->jacobian ().bottomRows <3> ()+
 				 joint2_->jacobian ().topRows <3>()-
 				 joint1_->jacobian ().topRows <3>());
 	jacobian_.bottomRows <3> ().leftCols (leftCols) =
 	  Jlog_ *
-#ifdef FCL_HAVE_EIGEN
-          transpose (R1inJ1) * transpose (R1)
-#else
           // This is a bug in Eigen that is fixed in a future version.
           // See https://bitbucket.org/eigen/eigen/commits/de7b8c9b1e86/
-          transpose (R1*R1inJ1)
-#endif
-          *
+          // transpose (R1*R1inJ1)
+          R1inJ1.transpose () * R1.transpose () *
 	  (joint2_->jacobian ().bottomRows <3> () -
 	   joint1_->jacobian ().bottomRows <3> ());
       } else {
 	jacobian_.topRows <3> ().leftCols (leftCols) =
-	  transpose (R1inJ1)*(-cross2_*joint2_->jacobian ().bottomRows <3> ()
+	  R1inJ1.transpose()*(-cross2_*joint2_->jacobian ().bottomRows <3> ()
 			      + joint2_->jacobian ().topRows <3>());
 	jacobian_.bottomRows <3> ().leftCols (leftCols) =
-	  Jlog_ * transpose (R1inJ1) * (joint2_->jacobian ().bottomRows <3> ());
+	  Jlog_ * R1inJ1.transpose () * (joint2_->jacobian ().bottomRows <3> ());
       }
       size_type index=0;
       for (size_type i=0; i<6; ++i) {

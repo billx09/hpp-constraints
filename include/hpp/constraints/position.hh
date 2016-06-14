@@ -91,7 +91,7 @@ namespace hpp {
                                    const JointPtr_t& joint,
                                    const vector3_t& pointInLocalFrame,
                                    const vector3_t& targetInGlobalFrame,
-                                   const matrix3_t& rotation = matrix3_t::getIdentity (),
+                                   const matrix3_t& rotation = matrix3_t::Identity (),
                                    std::vector <bool> mask = boost::assign::list_of (true)(true)(true));
 
       /// Return a shared pointer to a new instance
@@ -108,7 +108,7 @@ namespace hpp {
 				   const vector3_t& pointInLocalFrame,
 				   const vector3_t& targetInGlobalFrame,
 				   const matrix3_t& rotation =
-				   matrix3_t::getIdentity (),
+				   matrix3_t::Identity (),
 				   std::vector <bool> mask =
 				   boost::assign::list_of (true)(true)(true));
 

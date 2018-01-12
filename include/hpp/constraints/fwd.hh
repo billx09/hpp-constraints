@@ -117,6 +117,7 @@ namespace hpp {
       ConvexShapeContactComplementPtr_t StaticStabilityGravityComplementPtr_t;
 
     template <int _Options> class GenericTransformation;
+    template <int _Options> class ExplicitGenericTransformation;
 
     /// \cond DEVEL
     const int RelativeBit       = 0x1;
@@ -129,6 +130,8 @@ namespace hpp {
     typedef GenericTransformation< RelativeBit | PositionBit | OrientationBit > RelativeTransformation;
     typedef GenericTransformation< RelativeBit | PositionBit                  > RelativePosition;
     typedef GenericTransformation< RelativeBit |               OrientationBit > RelativeOrientation;
+    typedef ExplicitGenericTransformation< RelativeBit | PositionBit | OrientationBit > ExplicitRelativeTransformation;
+    typedef ExplicitGenericTransformation< RelativeBit | PositionBit                  > ExplicitRelativePosition;
     typedef boost::shared_ptr<Position> PositionPtr_t;
     typedef boost::shared_ptr<Orientation> OrientationPtr_t;
     typedef boost::shared_ptr<Transformation> TransformationPtr_t;

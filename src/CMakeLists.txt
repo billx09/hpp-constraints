@@ -17,6 +17,7 @@ SET(LIBRARY_NAME ${PROJECT_NAME})
 SET (${LIBRARY_NAME}_SOURCES
   differentiable-function.cc
   differentiable-function-stack.cc
+  explicit-generic-transformation.cc
   generic-transformation.cc
   relative-com.cc
   com-between-feet.cc

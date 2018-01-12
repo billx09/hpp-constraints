@@ -20,6 +20,9 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 # Make Boost.Test generates the main function in test cases.
 ADD_DEFINITIONS(-DBOOST_TEST_DYN_LINK -DBOOST_TEST_MAIN)
 
+# Specify the tests data files directory.
+ADD_DEFINITIONS(-DTEST_DIRECTORY="${CMAKE_SOURCE_DIR}/tests/data")
+
 # ADD_TESTCASE(NAME)
 # ------------------------
 #
@@ -56,3 +59,6 @@ ADD_TESTCASE (symbolic-calculus         FALSE FALSE)
 ADD_TESTCASE (iterative-solver          FALSE FALSE)
 ADD_TESTCASE (explicit-solver           FALSE FALSE)
 ADD_TESTCASE (hybrid-solver             FALSE FALSE)
+
+ADD_TESTCASE (explicit-generic-trans    FALSE FALSE)
+SET_PROPERTY(TARGET explicit-generic-trans APPEND_STRING PROPERTY COMPILE_FLAGS " -DDATA_DIR=\\\"${CMAKE_CURRENT_SOURCE_DIR}/data\\\"")

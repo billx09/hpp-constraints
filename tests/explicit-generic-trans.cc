@@ -40,8 +40,6 @@
 using namespace hpp::pinocchio;
 using namespace hpp::constraints;
 
-typedef ExplicitGenericTransformation< RelativeBit | PositionBit | OrientationBit > ExplicitRelativeTransformation;
-
 DevicePtr_t createRobot ()
 {
   //DevicePtr_t robot = unittest::makeDevice(unittest::HumanoidRomeo, "romeo");
@@ -71,18 +69,18 @@ DevicePtr_t createRobot ()
 template <typename T> inline typename T::template NRowsBlockXpr<3>::Type trans(const Eigen::MatrixBase<T>& j) { return const_cast<Eigen::MatrixBase<T>&>(j).derived().template topRows   <3>(); }
 template <typename T> inline typename T::template NRowsBlockXpr<3>::Type omega(const Eigen::MatrixBase<T>& j) { return const_cast<Eigen::MatrixBase<T>&>(j).derived().template bottomRows<3>(); }
 
-BOOST_AUTO_TEST_CASE (two_freeflyer)
+template <typename ExplicitGT> void run_two_freeflyer()
 {
   DevicePtr_t robot = createRobot();
   BOOST_REQUIRE (robot);
 
   JointPtr_t object2 = robot->getJointByName("obj2/root_joint");
-  JointPtr_t object1  = robot->getJointByName("obj1/root_joint");
+  JointPtr_t object1 = robot->getJointByName("obj1/root_joint");
 
   Transform3f M2inO2 (Transform3f::Identity());
   Transform3f M1inO1 (Transform3f::Identity());
 
-  ExplicitRelativeTransformation::Ptr_t ert = ExplicitRelativeTransformation::create (
+  typename ExplicitGT::Ptr_t ert = ExplicitGT::create (
       "explicit_relative_transformation", robot,
       object1, object2, M1inO1, M2inO2);
   // ExplicitNumericalConstraintPtr_t enm = ert->createNumericalConstraint();
@@ -109,20 +107,23 @@ BOOST_AUTO_TEST_CASE (two_freeflyer)
     M1inO1.inverse() * object1->currentTransformation().inverse()
     * object2->currentTransformation() * M2inO2;
 
-  BOOST_CHECK (diff.isIdentity());
+  if (ExplicitGT::ComputePosition)
+    BOOST_CHECK (diff.translation().isZero());
+  if (ExplicitGT::ComputeOrientation)
+    BOOST_CHECK (diff.rotation().isIdentity());
 
   // Check Jacobian of implicit numerical constraints by finite difference
   //
   value_type dt (1e-5);
   Configuration_t q0 (qout);
   vector_t v (robot->numberDof ());
-  matrix_t J (6, ert->inputDerivativeSize());
+  matrix_t J (ert->outputDerivativeSize(), ert->inputDerivativeSize());
   LiegroupElement value0 (ert->outputSpace ()),
     value (ert->outputSpace ());
   ert->value (value0, inConf.rview(q0).eval());
   ert->jacobian (J, inConf.rview(q0).eval());
-    PRINT("J=" << std::endl << J);
-    PRINT("q0=" << q0.transpose ());
+  PRINT("J=" << std::endl << J);
+  PRINT("q0=" << q0.transpose ());
   // First at solution configuration
   for (size_type i=0; i<12; ++i) {
     // test canonical basis vectors
@@ -136,7 +137,9 @@ BOOST_AUTO_TEST_CASE (two_freeflyer)
     PRINT("df=" << df.transpose ());
     PRINT("Jdq=" << Jdq.transpose ());
     PRINT("||Jdq - df ||=" << (df - Jdq).norm () << std::endl);
-    BOOST_CHECK ((df - Jdq).norm () < 1e-4);
+    BOOST_CHECK_SMALL ((df - Jdq).norm (), 1e-4);
+    // TODO for ExplicitRelativePosition, the jacobian should be multiplied by R2
+    // BOOST_CHECK_SMALL ((object2->currentTransformation().rotation().transpose() * df - Jdq).norm (), 1e-4);
   }
   // Second at random configurations
   for (size_type i=0; i<100; ++i) {
@@ -157,13 +160,16 @@ BOOST_AUTO_TEST_CASE (two_freeflyer)
       PRINT("df=" << df.transpose ());
       PRINT("Jdq=" << Jdq.transpose ());
       PRINT("||Jdq - df ||=" << (df - Jdq).norm () << std::endl);
-      BOOST_CHECK ((df - Jdq).norm () < 1e-4);
+      BOOST_CHECK_SMALL ((df - Jdq).norm (), 1e-4);
     }
     PRINT("");
   }
 }
 
-BOOST_AUTO_TEST_CASE (two_frames_on_freeflyer)
+BOOST_AUTO_TEST_CASE (two_freeflyer_trans) { run_two_freeflyer<ExplicitRelativeTransformation>(); }
+BOOST_AUTO_TEST_CASE (two_freeflyer_pos  ) { run_two_freeflyer<ExplicitRelativePosition      >(); }
+
+template <typename ExplicitGT> void run_two_frames_on_freeflyer()
 {
   DevicePtr_t robot = createRobot();
   BOOST_REQUIRE (robot);
@@ -177,7 +183,7 @@ BOOST_AUTO_TEST_CASE (two_frames_on_freeflyer)
   PRINT("M2inO2=" << M2inO2);
   PRINT("M1inO1=" << M1inO1);
 
-  ExplicitRelativeTransformation::Ptr_t ert = ExplicitRelativeTransformation::create (
+  typename ExplicitGT::Ptr_t ert = ExplicitGT::create (
       "explicit_relative_transformation", robot,
       object1, object2, M1inO1, M2inO2);
   // ExplicitNumericalConstraintPtr_t enm = ert->createNumericalConstraint();
@@ -204,14 +210,21 @@ BOOST_AUTO_TEST_CASE (two_frames_on_freeflyer)
     M1inO1.inverse() * object1->currentTransformation().inverse()
     * object2->currentTransformation() * M2inO2;
 
-  BOOST_CHECK (diff.isIdentity());
+  if (ExplicitGT::ComputePosition) {
+    BOOST_CHECK (diff.translation().isZero());
+    vector3_t diff2 = object1->currentTransformation().rotation() * M1inO1.translation()
+      - (object2->currentTransformation().translation() + M2inO2.translation());
+    BOOST_CHECK (diff2.isZero());
+  }
+  if (ExplicitGT::ComputeOrientation)
+    BOOST_CHECK (diff.rotation().isIdentity());
 
   // Check Jacobian of implicit numerical constraints by finite difference
   //
   value_type dt (1e-5);
   Configuration_t q0 (qout);
   vector_t v (robot->numberDof ());
-  matrix_t J (6, ert->inputDerivativeSize());
+  matrix_t J (ert->outputDerivativeSize(), ert->inputDerivativeSize());
   LiegroupElement value0 (ert->outputSpace ()),
     value (ert->outputSpace ());
   ert->value (value0, inConf.rview(q0).eval());
@@ -231,7 +244,7 @@ BOOST_AUTO_TEST_CASE (two_frames_on_freeflyer)
     PRINT("df=" << df.transpose ());
     PRINT("Jdq=" << Jdq.transpose ());
     PRINT("||Jdq - df ||=" << (df - Jdq).norm () << std::endl);
-    BOOST_CHECK ((df - Jdq).norm () < 1e-4);
+    BOOST_CHECK_SMALL ((df - Jdq).norm (), 1e-4);
   }
   // Second at random configurations
   for (size_type i=0; i<100; ++i) {
@@ -251,8 +264,11 @@ BOOST_AUTO_TEST_CASE (two_frames_on_freeflyer)
       PRINT("df=" << df.transpose ());
       PRINT("Jdq=" << Jdq.transpose ());
       PRINT("||Jdq - df ||=" << (df - Jdq).norm () << std::endl);
-      BOOST_CHECK ((df - Jdq).norm () < 1e-4);
+      BOOST_CHECK_SMALL ((df - Jdq).norm (), 1e-4);
     }
     PRINT("");
   }
 }
+
+BOOST_AUTO_TEST_CASE (two_frames_on_freeflyer_trans) { run_two_frames_on_freeflyer<ExplicitRelativeTransformation>(); }
+BOOST_AUTO_TEST_CASE (two_frames_on_freeflyer_pos  ) { run_two_frames_on_freeflyer<ExplicitRelativePosition      >(); }

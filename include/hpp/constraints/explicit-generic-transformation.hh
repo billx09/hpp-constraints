@@ -116,10 +116,7 @@ namespace hpp {
 
       /// Set desired relative transformation of joint2 in joint1
       ///
-      inline void reference (const Transform3f& reference)
-      {
-        ref_ = reference;
-      }
+      void reference (const Transform3f& reference);
 
       /// Get desired relative orientation
       inline const Transform3f& reference () const

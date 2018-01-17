@@ -58,14 +58,17 @@ namespace hpp {
           joint = joint->parentJoint();
         }
       }
+      template <bool pos, bool ori>
       BlockIndex::segments_t jointConfInterval (JointConstPtr_t j) {
-        return BlockIndex::segments_t(1, BlockIndex::segment_t
-                                      (j->rankInConfiguration(),
-                                       j->configSize()));
+        return BlockIndex::segments_t(1, BlockIndex::segment_t (
+              j->rankInConfiguration() + (pos ? 0 : 3),
+              j->configSize() - (pos ? 0 : 3) - (ori ? 0 : 4)));
       }
+      template <bool pos, bool ori>
       BlockIndex::segments_t jointVelInterval (JointConstPtr_t j) {
-        return BlockIndex::segments_t(1, BlockIndex::segment_t
-                                      (j->rankInVelocity(), j->numberDof()));
+        return BlockIndex::segments_t(1, BlockIndex::segment_t (
+              j->rankInVelocity() + (pos ? 0 : 3),
+              j->numberDof() - (pos ? 0 : 3) - (ori ? 0 : 3)));
       }
     }
 
@@ -100,9 +103,9 @@ namespace hpp {
         new ExplicitGenericTransformation<_Options> (name, robot, joint1, joint2,
             reference,
             BlockIndex::fromLogicalExpression (conf),
-            jointConfInterval(joint2),
+            jointConfInterval<ComputePosition,ComputeOrientation>(joint2),
             BlockIndex::fromLogicalExpression (vel),
-            jointVelInterval(joint2),
+            jointVelInterval<ComputePosition,ComputeOrientation>(joint2),
             mask);
       Ptr_t shPtr (ptr);
       ptr->init (shPtr);
@@ -123,7 +126,7 @@ namespace hpp {
       ExplicitGenericTransformation<_Options>::ExplicitGenericTransformation
     (const std::string& name      , const DevicePtr_t& robot,
      const JointConstPtr_t& joint1, const JointConstPtr_t& joint2,
-     const Transform3f& reference,
+     const Transform3f& ref,
      const segments_t inConf , const segments_t outConf,
      const segments_t inVel  , const segments_t outVel ,
      std::vector <bool> mask):
@@ -133,14 +136,23 @@ namespace hpp {
         robot_ (robot),
         joint1_ (joint1), joint2_ (joint2),
         parentJoint_ (joint2->parentJoint ()),
-        ref_ (reference),
         inConf_ (inConf),   inVel_  (inVel),
         outConf_ (outConf), outVel_ (outVel),
         mask_ (mask)
     {
+      reference (ref);
       assert(IsRelative);
       assert(mask.size()==MaskSize);
       for (int i = 0; i < MaskSize; ++i) { assert (mask[i]); }
+    }
+
+    template <int _Options>
+    void ExplicitGenericTransformation<_Options>::reference (const Transform3f& reference)
+    {
+      if (ComputePosition) ref_.translation() = reference.translation();
+      else                 ref_.translation().setZero();
+      if (ComputeOrientation) ref_.rotation() = reference.rotation();
+      else                    ref_.rotation().setIdentity();
     }
 
     template <int _Options>
@@ -213,8 +225,13 @@ namespace hpp {
               - cross2_ * omega(Jp())
               - trans(J2_parent_minus_J1_));
         } else {
-          tmpJac_.noalias() = R2().transpose() *
-            ( (- cross1_ * R1()) * omega(J1()) + R1() * trans(J1()));
+          if (ComputeOrientation) {
+            tmpJac_.noalias() = R2().transpose() *
+              ( (- cross1_ * R1()) * omega(J1()) + R1() * trans(J1()));
+          } else {
+            tmpJac_.noalias() =
+              ( (- cross1_ * R1()) * omega(J1()) + R1() * trans(J1()));
+          }
         }
         jacobian.topRows<3>() = inVel_.rview(tmpJac_);
       }

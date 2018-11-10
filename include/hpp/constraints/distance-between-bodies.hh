@@ -118,7 +118,7 @@ namespace hpp {
       void initGeomData(const Iterator1& begin1, const Iterator1& end1,
           const Iterator2& begin2, const Iterator2& end2);
 
-      typedef se3::GeometryData GeometryData;
+      typedef ::pinocchio::GeometryData GeometryData;
 
       DevicePtr_t robot_;
       JointPtr_t joint1_;

@@ -134,7 +134,7 @@ namespace hpp {
       freeflyerPose_ =
         joint2_->positionInParentFrame ().actInv (freeflyerPose_);
 
-      typedef Transform3f::Quaternion_t Q_t;
+      typedef Transform3f::Quaternion Q_t;
       result.vector ().head<3>() = freeflyerPose_.translation();
       result.vector ().tail<4>() = Q_t(freeflyerPose_.rotation()).coeffs();
     }
@@ -158,14 +158,14 @@ namespace hpp {
 
       const vector3_t& t1 (joint1_->currentTransformation().translation());
 
-      cross1_ = se3::skew((R1 * F1inJ1_invF2inJ2_.translation()).eval());
+      cross1_ = ::pinocchio::skew((R1 * F1inJ1_invF2inJ2_.translation()).eval());
       if (parentJoint_) {
         const vector3_t& t2_parent (parentJoint_       ->currentTransformation().translation());
-        cross2_ = se3::skew((t2_parent - t1).eval());
+        cross2_ = ::pinocchio::skew((t2_parent - t1).eval());
 
         J2_parent_minus_J1_.noalias() = parentJoint_->jacobian() - J1;
       } else {
-        cross2_ = - se3::skew(t1);
+        cross2_ = - ::pinocchio::skew(t1);
         // J2_parent_minus_J1_ = - J1;
       }
 

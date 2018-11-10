@@ -105,8 +105,8 @@ namespace hpp {
       }
       robot_->currentConfiguration (argument);
       robot_->computeForwardKinematics ();
-      se3::updateGeometryPlacements(robot_->model(), robot_->data(), robot_->geomModel(), data_);
-      minIndex_ = se3::computeDistances(robot_->geomModel(), data_);
+      ::pinocchio::updateGeometryPlacements(robot_->model(), robot_->data(), robot_->geomModel(), data_);
+      minIndex_ = ::pinocchio::computeDistances(robot_->geomModel(), data_);
       result.vector () [0] = data_.distanceResults[minIndex_].min_distance;
       latestArgument_ = argument;
       latestResult_ = result;
@@ -154,8 +154,8 @@ namespace hpp {
           const Iterator1& begin1, const Iterator1& end1,
           const Iterator2& begin2, const Iterator2& end2)
     {
-      using se3::GeometryModel;
-      const GeometryModel& model = robot_->geomModel();
+      using pinocchio::GeomModel;
+      const GeomModel& model = robot_->geomModel();
       // Deactivate all collision pairs.
       for (std::size_t i = 0; i < model.collisionPairs.size(); ++i)
         data_.activateCollisionPair(i, false);
@@ -165,7 +165,7 @@ namespace hpp {
 	for (Iterator2 it2 = begin2; it2 != end2; ++it2) {
 	  CollisionObjectConstPtr_t obj2 (*it2);
           std::size_t idx = model.findCollisionPair(
-              se3::CollisionPair (obj1->indexInModel(), obj2->indexInModel())
+              ::pinocchio::CollisionPair (obj1->indexInModel(), obj2->indexInModel())
               );
           if (idx < model.collisionPairs.size())
             data_.activateCollisionPair(idx);

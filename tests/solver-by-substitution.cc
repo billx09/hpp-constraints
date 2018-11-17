@@ -658,6 +658,37 @@ BOOST_AUTO_TEST_CASE(hybrid_solver)
   BOOST_CHECK_EQUAL(solver.solve<FixedSequence>(qrand),
                     BySubstitution::SUCCESS);
 
+  Configuration_t vel = Configuration_t::Random (device->numberDof());
+  vel *= 1e-7;
+  Configuration_t tmpvel = vel;
+
+  BOOST_MESSAGE("vel " << hpp::one_line(vel));
+
+  BOOST_CHECK_EQUAL(solver.solve(qrand, vel, Backtracking()),
+                    BySubstitution::SUCCESS);
+  // Check velocity of ee2 and ee3
+  BOOST_MESSAGE("vel " << hpp::one_line(vel));
+  BOOST_MESSAGE("ee2 velocity " << hpp::one_line((ee2->jacobian() * vel).eval()));
+  BOOST_MESSAGE("ee3 velocity " << hpp::one_line((ee3->jacobian() * vel).eval()));
+
+  qrand = tmp;
+  vel = tmpvel;
+  BOOST_CHECK_EQUAL(solver.solve(qrand, vel, ErrorNormBased()),
+                    BySubstitution::SUCCESS);
+  // Check velocity of ee2 and ee3
+  BOOST_MESSAGE("vel " << hpp::one_line(vel));
+  BOOST_MESSAGE("ee2 velocity " << hpp::one_line((ee2->jacobian() * vel).eval()));
+  BOOST_MESSAGE("ee3 velocity " << hpp::one_line((ee3->jacobian() * vel).eval()));
+
+  qrand = tmp;
+  vel = tmpvel;
+  BOOST_CHECK_EQUAL(solver.solve(qrand, vel, FixedSequence()),
+                    BySubstitution::SUCCESS);
+  // Check velocity of ee2 and ee3
+  BOOST_MESSAGE("vel " << hpp::one_line(vel));
+  BOOST_MESSAGE("ee2 velocity " << hpp::one_line((ee2->jacobian() * vel).eval()));
+  BOOST_MESSAGE("ee3 velocity " << hpp::one_line((ee3->jacobian() * vel).eval()));
+
   vector_t dq (device->numberDof());
   dq.setRandom();
   qrand = tmp;

@@ -347,6 +347,15 @@ namespace hpp {
       (vectorOut_t arg, lineSearch::FixedSequence  lineSearch) const;
       template BySubstitution::Status BySubstitution::impl_solve
       (vectorOut_t arg, lineSearch::ErrorNormBased lineSearch) const;
+
+      template BySubstitution::Status BySubstitution::impl_solve
+      (vectorOut_t arg, vectorOut_t v, lineSearch::Constant       lineSearch) const;
+      template BySubstitution::Status BySubstitution::impl_solve
+      (vectorOut_t arg, vectorOut_t v, lineSearch::Backtracking   lineSearch) const;
+      template BySubstitution::Status BySubstitution::impl_solve
+      (vectorOut_t arg, vectorOut_t v, lineSearch::FixedSequence  lineSearch) const;
+      template BySubstitution::Status BySubstitution::impl_solve
+      (vectorOut_t arg, vectorOut_t v, lineSearch::ErrorNormBased lineSearch) const;
     } // namespace solver
   } // namespace constraints
 } // namespace hpp

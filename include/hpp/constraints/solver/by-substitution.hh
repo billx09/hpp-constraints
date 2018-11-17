@@ -167,6 +167,20 @@ namespace hpp {
           // }
         }
 
+        template <typename LineSearchType>
+          Status solve (vectorOut_t arg, vectorOut_t v,
+              LineSearchType ls = LineSearchType()) const
+        {
+          // TODO when there are only locked joint explicit constraints,
+          // there is no need for this intricated loop.
+          // if (explicit_.isConstant()) {
+          // explicit_.solve(arg);
+          // iterative_.solve(arg, ls);
+          // } else {
+          return impl_solve (arg, v, ls);
+          // }
+        }
+
         /// Project velocity on constraint tangent space in "from"
         ///
         /// \param from configuration,
@@ -310,6 +324,9 @@ namespace hpp {
 
         template <typename LineSearchType>
           Status impl_solve (vectorOut_t arg, LineSearchType ls) const;
+
+        template <typename LineSearchType>
+          Status impl_solve (vectorOut_t arg, vectorOut_t v, LineSearchType ls) const;
 
         ExplicitConstraintSet explicit_;
         mutable matrix_t Je_, JeExpanded_;

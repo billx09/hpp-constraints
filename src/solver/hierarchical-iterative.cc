@@ -69,15 +69,15 @@ namespace hpp {
       }
 
       namespace lineSearch {
-        template bool Constant::operator()
+        template value_type Constant::operator()
           (const HierarchicalIterative& solver, vectorOut_t arg, vectorOut_t darg);
 
         Backtracking::Backtracking () : c (0.001), tau (0.7), smallAlpha (0.2) {}
-        template bool Backtracking::operator()
+        template value_type Backtracking::operator()
           (const HierarchicalIterative& solver, vectorOut_t arg, vectorOut_t darg);
 
         FixedSequence::FixedSequence() : alpha (.2), alphaMax (.95), K (.8) {}
-        template bool FixedSequence::operator()
+        template value_type FixedSequence::operator()
           (const HierarchicalIterative& solver, vectorOut_t arg, vectorOut_t darg);
 
         ErrorNormBased::ErrorNormBased(value_type alphaMin, value_type _a,
@@ -95,7 +95,7 @@ namespace hpp {
           b = - r_half * a;
         }
 
-        template bool ErrorNormBased::operator()
+        template value_type ErrorNormBased::operator()
           (const HierarchicalIterative& solver, vectorOut_t arg, vectorOut_t darg);
       }
 

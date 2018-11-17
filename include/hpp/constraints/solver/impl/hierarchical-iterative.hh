@@ -24,14 +24,14 @@ namespace hpp {
     namespace solver {
     namespace lineSearch {
       template <typename SolverType>
-      inline bool Constant::operator() (const SolverType& solver, vectorOut_t arg, vectorOut_t darg)
+      inline value_type Constant::operator() (const SolverType& solver, vectorOut_t arg, vectorOut_t darg)
       {
         solver.integrate (arg, darg, arg);
-        return true;
+        return 1.0;
       }
 
       template <typename SolverType>
-      inline bool Backtracking::operator() (const SolverType& solver, vectorOut_t arg, vectorOut_t u)
+      inline value_type Backtracking::operator() (const SolverType& solver, vectorOut_t arg, vectorOut_t u)
       {
         arg_darg.resize(arg.size());
 
@@ -56,7 +56,7 @@ namespace hpp {
             if (f_arg_norm2 - f_arg_darg_norm2 >= - alpha * t) {
               arg = arg_darg;
               u = darg;
-              return true;
+              return alpha;
             }
             // Prepare next step
             alpha *= tau;
@@ -68,7 +68,7 @@ namespace hpp {
 
         u *= smallAlpha;
         solver.integrate (arg, darg, arg);
-        return false;
+        return smallAlpha;
       }
 
       template <typename SolverType>
@@ -86,22 +86,23 @@ namespace hpp {
       }
 
       template <typename SolverType>
-      inline bool FixedSequence::operator() (const SolverType& solver, vectorOut_t arg, vectorOut_t darg)
+      inline value_type FixedSequence::operator() (const SolverType& solver, vectorOut_t arg, vectorOut_t darg)
       {
         darg *= alpha;
+        value_type ar = alpha;
         alpha = alphaMax - K * (alphaMax - alpha);
         solver.integrate (arg, darg, arg);
-        return true;
+        return ar;
       }
 
       template <typename SolverType>
-      inline bool ErrorNormBased::operator() (const SolverType& solver, vectorOut_t arg, vectorOut_t darg)
+      inline value_type ErrorNormBased::operator() (const SolverType& solver, vectorOut_t arg, vectorOut_t darg)
       {
         const value_type r = solver.residualError() / solver.squaredErrorThreshold();
         const value_type alpha = C - K * std::tanh(a * r + b);
         darg *= alpha;
         solver.integrate (arg, darg, arg);
-        return true;
+        return alpha;
       }
     }
 

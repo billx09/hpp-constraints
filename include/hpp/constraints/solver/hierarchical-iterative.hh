@@ -37,7 +37,7 @@ namespace hpp {
         /// No line search. Use \f$\alpha_i = 1\f$
         struct Constant {
           template <typename SolverType>
-          bool operator() (const SolverType& solver, vectorOut_t arg,
+          value_type operator() (const SolverType& solver, vectorOut_t arg,
                            vectorOut_t darg);
         };
 
@@ -47,7 +47,7 @@ namespace hpp {
           Backtracking ();
 
           template <typename SolverType>
-          bool operator() (const SolverType& solver, vectorOut_t arg,
+          value_type operator() (const SolverType& solver, vectorOut_t arg,
                            vectorOut_t darg);
 
           template <typename SolverType>
@@ -64,7 +64,7 @@ namespace hpp {
           FixedSequence();
 
           template <typename SolverType>
-          bool operator() (const SolverType& solver, vectorOut_t arg,
+          value_type operator() (const SolverType& solver, vectorOut_t arg,
                            vectorOut_t darg);
 
           value_type alpha;
@@ -81,7 +81,7 @@ namespace hpp {
           ErrorNormBased(value_type alphaMin = 0.2);
 
           template <typename SolverType>
-          bool operator() (const SolverType& solver, vectorOut_t arg,
+          value_type operator() (const SolverType& solver, vectorOut_t arg,
                            vectorOut_t darg);
 
           value_type C, K, a, b;

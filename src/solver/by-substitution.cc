@@ -29,16 +29,16 @@ namespace hpp {
   namespace constraints {
     namespace solver {
       namespace lineSearch {
-        template bool Constant::operator()
+        template value_type Constant::operator()
           (const BySubstitution& solver, vectorOut_t arg, vectorOut_t darg);
 
-        template bool Backtracking::operator()
+        template value_type Backtracking::operator()
           (const BySubstitution& solver, vectorOut_t arg, vectorOut_t darg);
 
-        template bool FixedSequence::operator()
+        template value_type FixedSequence::operator()
           (const BySubstitution& solver, vectorOut_t arg, vectorOut_t darg);
 
-        template bool ErrorNormBased::operator()
+        template value_type ErrorNormBased::operator()
           (const BySubstitution& solver, vectorOut_t arg, vectorOut_t darg);
       } // namespace lineSearch
 

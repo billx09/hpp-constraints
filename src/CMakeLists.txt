@@ -39,6 +39,7 @@ SET (${LIBRARY_NAME}_SOURCES
   locked-joint.cc
   solver/by-substitution.cc
   solver/hierarchical-iterative.cc
+  static-torque.cc
 )
 
 IF (${USE_QPOASES})

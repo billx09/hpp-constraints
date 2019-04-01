@@ -65,6 +65,19 @@ namespace hpp {
 						const JointPtr_t& joint,
 						const std::vector<CollisionObjectPtr_t>& objects);
 
+      /// Create instance and return shared pointer
+      ///
+      /// \param name name of the constraint,
+      /// \param robot robot that own the bodies,
+      /// \param collisionPair index in robot->geomModel().collisionPairs
+      static DistanceBetweenBodiesPtr_t create (const std::string& name,
+						const DevicePtr_t& robot,
+						const pinocchio::GeomIndex& collisionPair);
+
+      /// Returns \f$ \epsilon * \exp{ - \frac{x}{dist0} } \f$
+      /// \param dist0 set to negative value to disable.
+      void setExponentialDecrease (const value_type epsilon, const value_type& dist0);
+
       virtual ~DistanceBetweenBodies () throw () {}
 
     protected:
@@ -88,17 +101,21 @@ namespace hpp {
 			     const JointPtr_t& joint,
 			     const std::vector<CollisionObjectPtr_t>& objects);
 
+      DistanceBetweenBodies (const std::string& name, const DevicePtr_t& robot,
+			     const pinocchio::GeomIndex& collisionPair);
+
       virtual void impl_compute (LiegroupElementRef result,
 				 ConfigurationIn_t argument) const throw ();
       virtual void impl_jacobian (matrixOut_t jacobian,
 				  ConfigurationIn_t arg) const throw ();
     private:
-      typedef ::pinocchio::GeometryData GeometryData;
+      typedef pinocchio::GeomData GeomData;
 
       DevicePtr_t robot_;
       JointPtr_t joint1_;
       JointPtr_t joint2_;
-      mutable GeometryData data_;
+      value_type epsilon_, dist0_;
+      mutable GeomData data_;
       mutable std::size_t minIndex_;
       mutable Configuration_t latestArgument_;
       mutable LiegroupElement latestResult_;

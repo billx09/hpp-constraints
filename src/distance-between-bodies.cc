@@ -36,7 +36,7 @@ namespace hpp {
     {
       // Deactivate all collision pairs.
       for (std::size_t i = 0; i < model.collisionPairs.size(); ++i)
-        data.activateCollisionPair(i, false);
+        data.deactivateCollisionPair(i);
       // Activate only the relevant ones.
       for (size_type i = 0; i < body->nbInnerObjects(); ++i) {
 	CollisionObjectConstPtr_t obj1 (body->innerObjectAt(i));
@@ -73,12 +73,24 @@ namespace hpp {
       return shPtr;
     }
 
+    DistanceBetweenBodiesPtr_t DistanceBetweenBodies::create
+    (const std::string& name, const DevicePtr_t& robot,
+     const pinocchio::GeomIndex& collisionPair)
+    {
+      DistanceBetweenBodies* ptr = new DistanceBetweenBodies
+	(name, robot, collisionPair);
+      DistanceBetweenBodiesPtr_t shPtr (ptr);
+      return shPtr;
+    }
+
     DistanceBetweenBodies::DistanceBetweenBodies
     (const std::string& name, const DevicePtr_t& robot,
      const JointPtr_t& joint1, const JointPtr_t& joint2) :
       DifferentiableFunction (robot->configSize (), robot->numberDof (),
                               LiegroupSpace::R1 (), name), robot_ (robot),
-      joint1_ (joint1), joint2_ (joint2), data_ (robot->geomModel()),
+      joint1_ (joint1), joint2_ (joint2),
+      epsilon_ (-1), dist0_ (-1),
+      data_ (robot->geomModel()),
       latestResult_ (outputSpace ())
     {
       pinocchio::BodyPtr_t body2 (joint2_->linkedBody());
@@ -93,10 +105,46 @@ namespace hpp {
      const JointPtr_t& joint, const CollisionObjects_t& objects):
       DifferentiableFunction (robot->configSize (), robot->numberDof (),
                               LiegroupSpace::R1 (), name),
-      robot_ (robot), joint1_ (joint), joint2_ (), data_ (robot->geomModel()),
+      robot_ (robot), joint1_ (joint), joint2_ (),
+      epsilon_ (-1), dist0_ (-1),
+       data_ (robot->geomModel()),
       latestResult_ (outputSpace ())
     {
       initGeomData(robot_->geomModel(), data_, joint1_->linkedBody(), objects);
+    }
+
+    DistanceBetweenBodies::DistanceBetweenBodies
+    (const std::string& name, const DevicePtr_t& robot,
+     const pinocchio::GeomIndex& collisionPair):
+      DifferentiableFunction (robot->configSize (), robot->numberDof (),
+                              LiegroupSpace::R1 (), name),
+      robot_ (robot),
+      epsilon_ (-1), dist0_ (-1),
+       data_ (robot->geomModel()),
+      latestResult_ (outputSpace ())
+    {
+      const pinocchio::GeomModel& model = robot_->geomModel();
+
+      // Deactivate all collision pairs.
+      for (std::size_t i = 0; i < model.collisionPairs.size(); ++i)
+        data_.deactivateCollisionPair(i);
+
+      // Activate only the relevant one.
+      if (collisionPair < model.collisionPairs.size())
+        data_.activateCollisionPair(collisionPair);
+      else
+        throw std::invalid_argument("Collision pair not found");
+
+      ::pinocchio::CollisionPair cp = model.collisionPairs[collisionPair];
+      joint1_ = JointPtr_t(new pinocchio::Joint (robot, model.geometryObjects[cp.first ].parentJoint));
+      joint2_ = JointPtr_t(new pinocchio::Joint (robot, model.geometryObjects[cp.second].parentJoint));
+    }
+
+    void DistanceBetweenBodies::setExponentialDecrease (
+        const value_type epsilon, const value_type& dist0)
+    {
+      epsilon_ = epsilon;
+      dist0_   = dist0;
     }
 
     void DistanceBetweenBodies::impl_compute
@@ -112,6 +160,8 @@ namespace hpp {
       ::pinocchio::updateGeometryPlacements(robot_->model(), robot_->data(), robot_->geomModel(), data_);
       minIndex_ = ::pinocchio::computeDistances(robot_->geomModel(), data_);
       result.vector () [0] = data_.distanceResults[minIndex_].min_distance;
+      if (dist0_ > 0 && epsilon_ > 0)
+        result.vector () [0] = epsilon_ * std::exp (- result.vector () [0] / dist0_);
       latestArgument_ = argument;
       latestResult_ = result;
     }
@@ -151,6 +201,9 @@ namespace hpp {
            + P1_minus_P2.transpose () * R2.colwise().cross(P2_minus_t2) * J2.bottomRows<3>());
 	jacobian.noalias() -= tmp2/dist.vector () [0];
       }
+
+      if (dist0_ > 0 && epsilon_ > 0)
+        jacobian *= - latestResult_.vector()[0] / dist0_;
     }
   } // namespace constraints
 } // namespace hpp

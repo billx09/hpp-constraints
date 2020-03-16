@@ -15,6 +15,7 @@
 
 SET(LIBRARY_NAME ${PROJECT_NAME})
 SET (${LIBRARY_NAME}_SOURCES
+  convex-collision-avoidance.cc
   differentiable-function.cc
   differentiable-function-set.cc
   generic-transformation.cc

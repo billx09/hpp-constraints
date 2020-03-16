@@ -51,6 +51,7 @@ SET(${PROJECT_NAME}_HEADERS
   include/hpp/constraints/manipulability.hh
   include/hpp/constraints/convex-shape.hh
   include/hpp/constraints/convex-shape-contact.hh
+  include/hpp/constraints/convex-collision-avoidance.hh
   include/hpp/constraints/symbolic-calculus.hh
   include/hpp/constraints/symbolic-function.hh
   include/hpp/constraints/relative-com.hh
